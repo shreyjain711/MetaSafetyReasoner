@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
+
+# Run this script from prompt_engg directory: bash scripts/vllm_serve.sh
+
 set -euo pipefail
 
-MODEL_REPO="Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"  # e.g. Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+# meta-llama/Llama-3.2-3B-Instruct
+# Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+
+MODEL_REPO="meta-llama/Llama-3.2-3B-Instruct"
 HOST="0.0.0.0"
 PORT="8000"
 TP_SIZE="1"  # use multiple GPUs for larger models
@@ -18,6 +24,3 @@ vllm serve "$MODEL_REPO" \
   --gpu-memory-utilization "$GPU_UTIL" \
   --dtype "$DTYPE" \
   --api-key "$API_KEY"
-
-# example usage:
-# MODEL_REPO="Qwen/Qwen3-30B-A3B-Instruct-2507" bash prompt_engg/scripts/vllm_serve.sh
