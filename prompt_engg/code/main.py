@@ -25,7 +25,7 @@ def main():
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, 'w') as f:
         for res in results:
-            f.write(json.dumps(res) + '\n')
+            f.write(json.dumps(res, ensure_ascii=False) + '\n')
     print(f"Results saved to {output_file}")
 
 
