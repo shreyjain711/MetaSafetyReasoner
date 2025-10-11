@@ -12,11 +12,12 @@ def main():
     parser.add_argument('--score_prompt', type=str, required=True, help='Filename for scoring prompt')
     parser.add_argument('--data_file', type=str, required=True, help='Path to the data file')
     parser.add_argument('--batch_size', type=int, default=250, help='batch size/num of workers')
+    parser.add_argument('--prompt_feild', type=str, default='prompt', help='field name for the prompt in the dataset')
     args = parser.parse_args()
 
     results = []
     for batch in tqdm(data_generator(args.data_file, args.batch_size)):
-        batch_messages = [[{"role": "user", "content": d['prompt']}] for d in batch]
+        batch_messages = [[{"role": "user", "content": d[args.prompt_feild]}] for d in batch]
         responses = batch_call_litellm(batch_messages, model=args.model_name, client=args.client, max_workers=args.batch_size)
         for data, response in zip(batch, responses):
             results.append({**data, f'response_{args.model_name.split("/")[-1]}': response})
