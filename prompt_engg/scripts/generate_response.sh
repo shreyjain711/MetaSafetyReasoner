@@ -14,7 +14,7 @@ set -euo pipefail
     # val_data/multi_turn_subset_224.json
     # val_data/MSR_BeaverTails_4x56_subset.json
 
-MODEL_NAME="Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+MODEL_NAME="Qwen/Qwen3-30B-A3B-Thinking-2507-FP8"
 CLIENT="vllm"
 DATA_FILE="val_data/multi_turn_subset_224.json"
 BATCH_SIZE=250

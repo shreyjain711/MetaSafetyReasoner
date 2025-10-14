@@ -10,7 +10,7 @@ set -euo pipefail
   # open-thoughts/OpenThinker3-7B
   # deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
-MODEL_REPO="Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+MODEL_REPO="Qwen/Qwen3-30B-A3B-Thinking-2507-FP8"
 HOST="0.0.0.0"
 PORT="11632"
 TP_SIZE="1"  # use multiple GPUs for larger models
