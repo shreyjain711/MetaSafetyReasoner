@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Models:
     # meta-llama/Llama-3.2-3B-Instruct
-    # Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+    # Qwen/Qwen3-30B-A3B-Thinking-2507-FP8
     # open-thoughts/OpenThinker3-7B
     # deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
 
