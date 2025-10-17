@@ -117,7 +117,7 @@ def get_input_by_dataset(data, dataset):
 if __name__ == "__main__":
     inputs = []
     responses = []
-    model = 'Qwen3-30B-A3B-Instruct-2507-FP8' # 'OpenThinker3-7B' # 'DeepSeek-R1-Distill-Qwen-7B'
+    model = 'Qwen3-30B-A3B-Thinking-2507-FP8' # 'OpenThinker3-7B' # 'DeepSeek-R1-Distill-Qwen-7B'
     dataset = 'multi_turn_subset_224' # 'MSR_BeaverTails_4x56_subset'
     with open(f'/ocean/projects/cis250042p/sjain13/MetaSafetyReasoner/prompt_engg/outputs/results_{model}_{dataset}.json', 'r') as f:
         for line in f:
