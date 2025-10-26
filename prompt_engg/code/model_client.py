@@ -87,4 +87,4 @@ def batch_call_litellm(batch_messages, model="openai/gpt-4o", client="litellm", 
     with Pool(processes=max_workers) as pool:
         for result in tqdm(pool.imap_unordered(_call_client_wrapper, args_list), total=len(batch_messages), desc="Processing batch"):
             results.append(result)
-    return [r for r in sorted(results, key=lambda x: x[0])]  # sort by original index
+    return [r[1] for r in sorted(results, key=lambda x: x[0])]  # sort by original index
