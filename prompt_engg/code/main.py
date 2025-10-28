@@ -26,7 +26,7 @@ def main():
         # Process one batch at a time
         for batch in (data_generator(args.data_file, args.batch_size, args.prompt_path, args.skip_lines)):
             indices, batch_data, batch_messages = zip(*batch)
-            responses = batch_call_model(batch_messages, model=args.model_name, client=args.client, max_workers=args.batch_size, port=args.port, validator=prompt_name.split('_')[-1])
+            responses = batch_call_model(batch_messages, model=args.model_name, client=args.client, max_workers=max(args.batch_size//5, 4000), port=args.port, validator=prompt_name.split('_')[-1])
             for i, data, response in zip(indices, batch_data, responses):
                 res = {**data, 'index': i, f'response_{args.model_name.split("/")[-1]}': response}
                 f.write(json.dumps(res, ensure_ascii=False) + '\n')
