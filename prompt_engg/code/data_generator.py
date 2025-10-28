@@ -7,7 +7,7 @@ def create_message(data, user_prompt, system_prompt):
         return [{"role": "user", "content": user_prompt}]
     return [
             {"role": "system", "content": system_prompt}, 
-            {"role": "user", "content": user_prompt}
+            {"role": "user", "content": user_prompt.replace('{query}', data['Prompt'])}
         ]
 
 def get_promt_from_file(prompt_file_path):
@@ -17,7 +17,7 @@ def get_promt_from_file(prompt_file_path):
     elif prompt_file_path.endswith('.yml'):
         with open(prompt_file_path, 'r') as f:
             prompt_data = yaml.safe_load(f)
-            return (prompt_data.get('prompts').get('system').strip(), prompt_data.get('prompts').get('user').strip())
+            return (prompt_data.get('prompts').get('user').strip(), prompt_data.get('prompts').get('system').strip())
 
 
 def dataset_reader(file_path, skip_lines):
@@ -37,8 +37,8 @@ def dataset_reader(file_path, skip_lines):
 def data_generator(file_path, batch_size, prompt_file_path=None, skip_lines=0):
     user_prompt, system_prompt = get_promt_from_file(prompt_file_path)
     batch = []
-    for data in dataset_reader(file_path, skip_lines):
-        batch.append((data, create_message(data, user_prompt, system_prompt)))
+    for i, data in enumerate(dataset_reader(file_path, skip_lines)):
+        batch.append((i, data, create_message(data, user_prompt, system_prompt)))
         if len(batch) == batch_size:
             yield batch
             batch = []
