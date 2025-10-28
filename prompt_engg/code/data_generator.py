@@ -7,7 +7,7 @@ def create_message(data, user_prompt, system_prompt):
         return [{"role": "user", "content": user_prompt}]
     return [
             {"role": "system", "content": system_prompt}, 
-            {"role": "user", "content": user_prompt.replace('{query}', data['Prompt'])}
+            {"role": "user", "content": user_prompt.replace('{query}', str(data['Prompt']))}
         ]
 
 def get_promt_from_file(prompt_file_path):
