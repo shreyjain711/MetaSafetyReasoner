@@ -59,15 +59,17 @@ def call_vllm(messages, model, PORT):
     tries, response = 0, None
     while tries < 3 and response is None:
         try:
+            tries += 1
             response = CLIENT.chat.completions.create(
                 model=model,
                 messages=messages
             )
-            response = response.choices[0].message.content.split('</think>')[-1]
-            if is_valid_response(response, VALIDATOR) is False:
+            response = response.choices[0].message.content
+            if is_valid_response(response.split('</think>')[-1], VALIDATOR) is False:
                 response = None
-            tries += 1
+            else: response = response.split('</think>')[-1]
         except Exception as e:
+            
             response = None
     return response
     
@@ -89,7 +91,6 @@ def batch_call_model(batch_messages, model="openai/gpt-4o", client="litellm", se
     Returns: list of responses
     """
     global API_KEY, VALIDATOR
-    API_KEY = load_api_key(secrets_file)
     if validator is not None:
         VALIDATOR = validator
     
