@@ -1,12 +1,13 @@
 import json 
 
-def get_json(response):
-    if type(response) != str: return None
+def get_json(response, return_empty=False):
+    default_response = {} if return_empty else None
+    if type(response) != str: return default_response
     try:
         return json.loads(response)
     except Exception as e:
         print(e)
-        return None
+        return default_response
 
 def is_valid_response(response, validator, debug=True, do_lvl4_check=True):
     if validator == 'cat':
@@ -41,17 +42,17 @@ def is_valid_response(response, validator, debug=True, do_lvl4_check=True):
     elif validator == 'sev':
         resp = get_json(response)
         if resp is None:
-            print("DBG-SV1", response)
+            if debug: print("DBG-SV1", response)
             return False
         
         if 'risk_level' not in resp: return False
         for k in ['score', 'label', 'reason']: 
             if k not in resp['risk_level']: 
-                print("DBG-SV2", response)
+                if debug: print("DBG-SV2", response)
                 return False
         
         if resp['risk_level']['label'] not in ['Safe', 'Low Risk', 'Medium Risk', 'High Risk']: 
-            print("DBG-SV3", response)
+            if debug: print("DBG-SV3", response)
             return False
 
         lvl_scr_map = {
@@ -61,7 +62,7 @@ def is_valid_response(response, validator, debug=True, do_lvl4_check=True):
                 'High Risk': 3
             }
         if lvl_scr_map[resp['risk_level']['label']] != int(resp['risk_level']['score']):
-            print("DBG-SV4", response)
+            if debug: print("DBG-SV4", response)
             return False
         
     return True
