@@ -9,16 +9,16 @@ def main():
     parser = argparse.ArgumentParser(description="Process model name and prompt files.")
     parser.add_argument('--model_name', type=str, required=True, help='Name of the model')
     parser.add_argument('--client', type=str, required=True, help='Name of the client. e.g. litellm, vllm, openai.')
-    parser.add_argument('--prompt_path', type=str, required=True, help='Filename for scoring prompt')
+    parser.add_argument('--prompt_path', type=str, required=False, default='', help='Filename for scoring prompt')
     parser.add_argument('--data_file', type=str, required=True, help='Path to the data file')
     parser.add_argument('--batch_size', type=int, default=250, help='batch size/num of workers')
-    parser.add_argument('--prompt_field', type=str, default='prompt', help='field name for the prompt in the dataset')
     parser.add_argument('--skip_lines', type=int, default=0, help='skip these many lines')
     parser.add_argument('--port', type=int, default=11632, help='Port number for vLLM server')
+    parser.add_argument('--output_path_prefix', type=str, default='results')
     args = parser.parse_args()
 
-    prompt_name = f'''_{args.prompt_path.split('/')[-1].split('.')[0]}''' if 'saferbench' in args.prompt_path else ''
-    output_file = f"outputs/results{prompt_name}_{args.model_name.split('/')[-1]}_{args.data_file.split('.')[0].split('/')[-1]}.jsonl"
+    prompt_name = '' if 'saferbench' not in args.prompt_path else f'''_{args.prompt_path.split('/')[-1].split('.')[0]}'''
+    output_file = f"outputs/{args.output_path_prefix}{prompt_name}_{args.model_name.split('/')[-1]}_{args.data_file.split('.')[0].split('/')[-1]}.jsonl"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     file_mode = 'w' if args.skip_lines == 0 else 'a'

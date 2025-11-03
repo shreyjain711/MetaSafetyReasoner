@@ -3,22 +3,24 @@ import json
 from datasets import load_dataset
 
 def create_message(data, user_prompt, system_prompt):
-    if system_prompt is None:
-        return [{"role": "user", "content": user_prompt}]
+    if system_prompt is None or len(system_prompt) == 0:
+        return [{"role": "user", "content": user_prompt.replace('{query}', str(data['Prompt']))}]
     return [
             {"role": "system", "content": system_prompt}, 
             {"role": "user", "content": user_prompt.replace('{query}', str(data['Prompt']))}
         ]
 
 def get_promt_from_file(prompt_file_path):
-    if prompt_file_path.endswith('.txt'):
+    user_prompt, system_prompt = '{query}', None
+    if prompt_file_path is not None and prompt_file_path.endswith('.txt'):
         with open(prompt_file_path, 'r') as f:
-            return (f.read().strip(), None)
-    elif prompt_file_path.endswith('.yml'):
+            user_prompt = f.read().strip()
+    elif prompt_file_path is not None and prompt_file_path.endswith('.yml'):
         with open(prompt_file_path, 'r') as f:
             prompt_data = yaml.safe_load(f)
-            return (prompt_data.get('prompts').get('user').strip(), prompt_data.get('prompts').get('system').strip())
-
+            user_prompt = prompt_data.get('prompts').get('user').strip()
+            system_prompt = prompt_data.get('prompts').get('system').strip()
+    return user_prompt, system_prompt
 
 def dataset_reader(file_path, skip_lines):
     if file_path.startswith('hf://'):
@@ -32,7 +34,6 @@ def dataset_reader(file_path, skip_lines):
                     skip_lines -= 1
                     continue
                 yield json.loads(line)
-
 
 def data_generator(file_path, batch_size, prompt_file_path=None, skip_lines=0):
     user_prompt, system_prompt = get_promt_from_file(prompt_file_path)
