@@ -63,14 +63,22 @@ def call_vllm(messages, model, PORT):
             response = CLIENT.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=512
+                temperature=0.6,
+                top_p=0.95,
+                # max_tokens=2048,
             )
             response = response.choices[0].message.content
             if is_valid_response(response.split('</think>')[-1], VALIDATOR) is False:
                 response = None
-            else: response = response.split('</think>')[-1]
+            else: 
+                if len(messages)>1:
+                    response = response.split('</think>')[-1]
+                elif 'EXAONE' in model:
+                    response = '<thought>\n' + response
+                elif 'qwen' in model.lower() and '<think>' not in response:
+                    response = '<think>\n' + response
+                    
         except Exception as e:
-            
             response = None
     return response
     
