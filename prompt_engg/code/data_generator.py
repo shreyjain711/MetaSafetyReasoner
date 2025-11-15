@@ -3,11 +3,17 @@ import json
 from datasets import load_dataset
 
 def create_message(data, user_prompt, system_prompt):
+    if 'Prompt' in data:
+        user_prompt = user_prompt.replace('{query}', str(data['Prompt']))
+    if 'Thinking' in data:
+        user_prompt = user_prompt.replace('{thinking}', str(data['Thinking']))
+    if 'Chunk' in data:
+        user_prompt = user_prompt.replace('{chunk}', str(data['Chunk']))
     if system_prompt is None or len(system_prompt) == 0:
-        return [{"role": "user", "content": user_prompt.replace('{query}', str(data['Prompt']))}]
+        return [{"role": "user", "content": user_prompt}]
     return [
             {"role": "system", "content": system_prompt}, 
-            {"role": "user", "content": user_prompt.replace('{query}', str(data['Prompt']))}
+            {"role": "user", "content": user_prompt}
         ]
 
 def get_promt_from_file(prompt_file_path):

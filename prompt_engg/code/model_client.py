@@ -63,9 +63,21 @@ def call_vllm(messages, model, PORT):
             response = CLIENT.chat.completions.create(
                 model=model,
                 messages=messages,
+                
+                # EXAONE
+                # temperature=0.6,
+                # top_p=0.95,
+
+                # Deepseek
                 temperature=0.6,
                 top_p=0.95,
-                # max_tokens=2048,
+                
+                # Qwen
+                # temperature=0.7,
+                # top_p=0.8,
+                # top_k=20,
+                
+                # max_tokens=512, # for saferbench tasks
             )
             response = response.choices[0].message.content
             if is_valid_response(response.split('</think>')[-1], VALIDATOR) is False:
@@ -93,23 +105,6 @@ def _call_client_wrapper(args):
     else:
         raise ValueError(f"Invalid client: {client}")
 
-
-#def batch_call_model(batch_messages, model="openai/gpt-4o", client="litellm", secrets_file='secrets.json', max_workers=5, port=11632, validator=None):
-#    """
-#    batch_messages: list of list of messages, e.g. [[{"role": "user", "content": "Hi"}], ...]
-#    Returns: list of responses
-#    """
-#    global API_KEY, VALIDATOR
-#    if validator is not None:
-#        VALIDATOR = validator
-#    
-#    args_list = [(i, message, model, client, port) for i, message in enumerate(batch_messages)]
-#    results = []
-#    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-#        futures = [executor.submit(_call_client_wrapper, args) for args in args_list]
-#        for future in tqdm(concurrent.futures.as_completed(futures), total=len(batch_messages), desc="Processing batch"):
-#            results.append(future.result())
-#    return [r[1] for r in sorted(results, key=lambda x: x[0])]
 
 def batch_call_model(batch_messages, model="openai/gpt-4o", client="litellm", secrets_file='secrets.json', max_workers=5, port=11632, validator=None):
     """
