@@ -3,10 +3,14 @@ import json
 import openai
 import litellm
 from tqdm import tqdm
-from multiprocessing import Pool
+# from multiprocessing import Pool
+import concurrent.futures
+from validator import is_valid_response
 
 litellm_client = None
 API_KEY = None
+CLIENT = None
+VALIDATOR = None
 
 def load_api_key(secrets_file, key_name='LITELLM_API_KEY'):
     with open(secrets_file, 'r') as f:
@@ -15,11 +19,13 @@ def load_api_key(secrets_file, key_name='LITELLM_API_KEY'):
 
 def call_openai(messages, model):
     try:
-        global API_KEY
+        global API_KEY, CLIENT
         if API_KEY is None:
             API_KEY = load_api_key('secrets.json', key_name='OPENAI_API_KEY')
-        client = openai.OpenAI(api_key=API_KEY)
-        response = client.chat.completions.create(
+        if CLIENT is None:
+            CLIENT = openai.OpenAI(api_key=API_KEY)
+
+        response = CLIENT.chat.completions.create(
             model=model,
             messages=messages
         )
@@ -42,49 +48,117 @@ def call_litellm(messages, model):
     except Exception as e:
         return f"Error: {e}"
 
-def call_vllm(messages, model):
-    try:
-        global API_KEY
-        if API_KEY is None:
-            API_KEY = load_api_key('secrets.json', key_name='VLLM_API_KEY')
-
+def call_vllm(messages, model, PORT):
+    global API_KEY, CLIENT, VALIDATOR
+    if API_KEY is None:
+        API_KEY = load_api_key('secrets.json', key_name='VLLM_API_KEY')
+    if CLIENT is None:
         # default URL for the vLLM server
-        base_url = os.getenv("VLLM_BASE_URL", "http://localhost:11632/v1")
+        base_url = os.getenv("VLLM_BASE_URL", f"http://localhost:{PORT}/v1")
+        CLIENT = openai.OpenAI(api_key=API_KEY, base_url=base_url)
+    tries, response = 0, None
+    while tries < 5 and response is None:
+        try:
+            tries += 1
+            response = CLIENT.chat.completions.create(
+                model=model,
+                messages=messages,
+                
+                # EXAONE
+                # temperature=0.6,
+                # top_p=0.95,
 
-        client = openai.OpenAI(api_key=API_KEY, base_url=base_url)
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error: {e}"
+                # Deepseek
+                temperature=0.6,
+                top_p=0.95,
+                
+                # Qwen
+                # temperature=0.7,
+                # top_p=0.8,
+                # top_k=20,
+                
+                # max_tokens=512, # for saferbench tasks
+            )
+            response = response.choices[0].message.content
+            if is_valid_response(response.split('</think>')[-1], VALIDATOR) is False:
+                response = None
+            else: 
+                if len(messages)>1:
+                    response = response.split('</think>')[-1]
+                elif 'EXAONE' in model:
+                    response = '<thought>\n' + response
+                elif 'qwen' in model.lower() and '<think>' not in response:
+                    response = '<think>\n' + response
+                    
+        except Exception as e:
+            response = None
+    return response
     
 def _call_client_wrapper(args):
-    i, messages, model, client = args
+    i, messages, model, client, port = args
     if client == "litellm":
         return i, call_litellm(messages, model)
     elif client == "vllm":
-        return i, call_vllm(messages, model)
+        return i, call_vllm(messages, model, port)
     elif client == "openai":
         return i, call_openai(messages, model)
     else:
         raise ValueError(f"Invalid client: {client}")
 
-# Example usage:
-# messages = [{"role": "user", "content": "Hello, who are you?"}]
-# print(call_litellm(messages))
 
-def batch_call_litellm(batch_messages, model="openai/gpt-4o", client="litellm", secrets_file='secrets.json', max_workers=5):
+def batch_call_model(batch_messages, model="openai/gpt-4o", client="litellm", secrets_file='secrets.json', max_workers=5, port=11632, validator=None):
     """
     batch_messages: list of list of messages, e.g. [[{"role": "user", "content": "Hi"}], ...]
     Returns: list of responses
     """
-    global API_KEY
-    API_KEY = load_api_key(secrets_file)
-    args_list = [(i, message, model, client) for i, message in enumerate(batch_messages)]
-    results = []
-    with Pool(processes=max_workers) as pool:
-        for result in tqdm(pool.imap_unordered(_call_client_wrapper, args_list), total=len(batch_messages), desc="Processing batch"):
-            results.append(result)
-    return [r for r in sorted(results, key=lambda x: x[0])]  # sort by original index
+    global API_KEY, VALIDATOR
+    if validator is not None:
+        VALIDATOR = validator
+
+    args_list = [(i, message, model, client, port) for i, message in enumerate(batch_messages)]
+    results = {}  # Using dict for O(1) insertion
+    futures_map = {}  # Map future objects to their indices
+    retry_count = {}  # Track retries per index
+    max_retries = 3
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        with tqdm(total=len(batch_messages), desc="Processing batch") as pbar:
+            active_futures = set()
+            next_idx = 0
+            optimal_batch = 800  # Match your API's optimal batch size
+
+            while next_idx < len(args_list) or active_futures:
+                # Submit tasks until we reach optimal_batch or max_workers
+                while len(active_futures) < min(optimal_batch, max_workers) and next_idx < len(args_list):
+                    future = executor.submit(_call_client_wrapper, args_list[next_idx])
+                    active_futures.add(future)
+                    futures_map[future] = next_idx
+                    next_idx += 1
+
+                # Check for completed futures
+                done, active_futures = concurrent.futures.wait(
+                    active_futures,
+                    return_when=concurrent.futures.FIRST_COMPLETED
+                )
+
+                # Process completed futures
+                for future in done:
+                    idx = futures_map[future]
+                    try:
+                        result_idx, result = future.result()
+                        results[result_idx] = result
+                        pbar.update(1)
+                    except Exception as e:
+                        # Retry failed tasks up to max_retries
+                        retry_count[idx] = retry_count.get(idx, 0) + 1
+                        if retry_count[idx] <= max_retries:
+                            new_future = executor.submit(_call_client_wrapper, args_list[idx])
+                            active_futures.add(new_future)
+                            futures_map[new_future] = idx
+                        else:
+                            results[idx] = f"Error: {e} (max retries exceeded)"
+                            pbar.update(1)
+
+    # Fill missing results with error message
+    sorted_results = [results[i] if i in results else None for i in range(len(batch_messages))]
+    return sorted_results

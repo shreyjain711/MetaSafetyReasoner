@@ -28,3 +28,5 @@ python code/main.py \
     --batch_size=$BATCH_SIZE \
     --score_prompt=$SCORE_PROMPT \
     --prompt_feild=$PROMPT_FEILD
+
+# python code/main.py --model_name "Qwen/Qwen3-4B-Instruct-2507-FP8" --client vllm --prompt_path prompts/saferbench_risk_cat.yml --data_file "hf://Nishoak/MetaSafetyReasoner_Dataset" --batch_size 256
