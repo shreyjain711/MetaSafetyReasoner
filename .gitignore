@@ -2,3 +2,7 @@ __pycache__/
 
 **/secrets.json
 **/adhoc.ipynb
+
+**/prompt_engg/outputs
+
+**/prompt_engg/datasets/combined_infs.jsonl
