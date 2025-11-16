@@ -65,19 +65,19 @@ def call_vllm(messages, model, PORT):
                 messages=messages,
                 
                 # EXAONE
-                # temperature=0.6,
-                # top_p=0.95,
-
-                # Deepseek
                 temperature=0.6,
                 top_p=0.95,
+
+                # Deepseek
+                # temperature=0.6,
+                # top_p=0.95,
                 
                 # Qwen
                 # temperature=0.7,
                 # top_p=0.8,
                 # top_k=20,
                 
-                # max_tokens=512, # for saferbench tasks
+                max_tokens=4096, # for saferbench tasks
             )
             response = response.choices[0].message.content
             if is_valid_response(response.split('</think>')[-1], VALIDATOR) is False:
@@ -91,6 +91,7 @@ def call_vllm(messages, model, PORT):
                     response = '<think>\n' + response
                     
         except Exception as e:
+            print("DBG", e)
             response = None
     return response
     
