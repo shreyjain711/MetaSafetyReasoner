@@ -12,6 +12,7 @@ def main():
     parser.add_argument('--prompt_path', type=str, required=False, default='', help='Filename for scoring prompt')
     parser.add_argument('--data_file', type=str, required=True, help='Path to the data file')
     parser.add_argument('--batch_size', type=int, default=250, help='batch size/num of workers')
+    parser.add_argument('--max_workers', type=int, default=800, help='max workers for parallel calls')
     parser.add_argument('--skip_lines', type=int, default=0, help='skip these many lines')
     parser.add_argument('--port', type=int, default=11632, help='Port number for vLLM server')
     parser.add_argument('--output_path_prefix', type=str, default='results')
@@ -26,7 +27,12 @@ def main():
         # Process one batch at a time
         for batch in (data_generator(args.data_file, args.batch_size, args.prompt_path, args.skip_lines)):
             indices, batch_data, batch_messages = zip(*batch)
-            responses = batch_call_model(batch_messages, model=args.model_name, client=args.client, max_workers=min(args.batch_size//5, 1000), port=args.port, validator=(None if len(prompt_name)==0 else prompt_name.split('_')[-1]))
+            responses = batch_call_model(batch_messages, 
+                                         model=args.model_name, 
+                                         client=args.client, 
+                                         max_workers=min(args.batch_size//5, args.max_workers), 
+                                         port=args.port, 
+                                         validator=(None if len(prompt_name)==0 else prompt_name.split('_')[-1]))
             for i, data, response in zip(indices, batch_data, responses):
                 res = {**data, 'index': i+args.skip_lines, f'response_{args.model_name.split("/")[-1]}': response}
                 f.write(json.dumps(res, ensure_ascii=False) + '\n')
@@ -35,3 +41,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python code/main.py --client openai --model_name gpt-5-mini --prompt_path prompts/saferbench_chunking.yml --data_file datasets/annot_phase1_stage1.jsonl --batch_size 7000 --output_path_prefix annot_phase1_stage1 --skip_lines 2000 --max_workers 2000
