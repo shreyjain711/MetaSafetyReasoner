@@ -13,7 +13,7 @@ set -euo pipefail
 
 MODEL_REPO="Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
 HOST="0.0.0.0"
-PORT="11632"
+PORT="14632"
 TP_SIZE="1"  # use multiple GPUs for larger models
 MAX_LEN="127000"  # 127k tokens, enough for inference
 GPU_UTIL="0.9"  # reserve 90% GPU memory for vllm

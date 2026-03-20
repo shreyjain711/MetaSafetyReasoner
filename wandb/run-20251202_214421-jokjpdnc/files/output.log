@@ -1,0 +1,3 @@
+Checkpoint tracker file does not exist: /home/jamesdin/James/MetaSafetyReasoner/checkpoints/verl_grpo_example_gsm8k_math/deepseek_llm_7b_function_rm_math/latest_checkpointed_iteration.txt
+Training from scratch
+test_gen_batch meta info: {'eos_token_id': 151645, 'pad_token_id': 151643, 'recompute_log_prob': False, 'do_sample': False, 'validate': True, 'global_steps': 0}

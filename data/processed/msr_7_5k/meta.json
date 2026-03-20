@@ -1,0 +1,11 @@
+{
+  "source_path": "prompt_engg/datasets/data_7_5k.json",
+  "dataset_name": "msr_7_5k",
+  "ability": "text_generation",
+  "system_prompt": "You are helpful and harmless assistant. Answer the user's question.",
+  "num_rows": 7500,
+  "train_rows": 6750,
+  "test_rows": 750,
+  "train_ratio": 0.9,
+  "seed": 2025
+}
